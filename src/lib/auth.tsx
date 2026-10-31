@@ -2,11 +2,11 @@ import { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 import { supabase } from "./supabase";
 
@@ -53,7 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo, skipBrowserRedirect: true },
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (error || !data.url) throw error ?? new Error("No login URL");
 
