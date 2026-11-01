@@ -14,6 +14,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../lib/auth";
 import { competitionInfo, todayISO } from "../../lib/dates";
+import { useSteps } from "../../lib/steps";
 import { supabase } from "../../lib/supabase";
 
 const DAILY_GOAL = 10000;
@@ -45,6 +46,13 @@ export default function Dashboard() {
   const { session } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const {
+    status,
+    todaySteps: healthSteps,
+    lastSync,
+    syncing,
+    connect,
+  } = useSteps();
 
   const [comps, setComps] = useState<Comp[]>([]);
   const [todaySteps, setTodaySteps] = useState(0);
@@ -76,7 +84,7 @@ export default function Dashboard() {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load]),
+    }, [load, lastSync]),
   );
 
   async function onRefresh() {
@@ -90,7 +98,8 @@ export default function Dashboard() {
     " ",
   )[0];
   const avatar: string | undefined = meta.avatar_url;
-  const pct = Math.min(100, Math.round((todaySteps / DAILY_GOAL) * 100));
+  const shownSteps = status === "ready" ? healthSteps : todaySteps;
+  const pct = Math.min(100, Math.round((shownSteps / DAILY_GOAL) * 100));
 
   return (
     <ScrollView
@@ -129,34 +138,47 @@ export default function Dashboard() {
       {/* Today's steps */}
       <Animated.View
         entering={FadeInDown.duration(500)}
-        className="bg-card border border-line rounded-3xl p-5 mb-8"
+        className="bg-card border border-line rounded-3xl p-6 mb-8 items-center"
       >
-        <View className="flex-row items-center justify-between">
-          <Text className="text-muted text-xs font-semibold tracking-widest">
-            TODAY
+        <ProgressRing progress={shownSteps / DAILY_GOAL} size={200} stroke={16}>
+          <Text className="text-ink text-5xl font-extrabold">
+            {fmt(shownSteps)}
           </Text>
-          <View className="flex-row items-center">
-            <Ionicons name="flame" size={14} color="#C6F432" />
-            <Text className="text-accent text-xs font-bold ml-1">
-              {pct}% of goal
-            </Text>
-          </View>
-        </View>
-        <View className="flex-row items-end mt-2">
-          <Text className="text-ink text-6xl font-extrabold">
-            {fmt(todaySteps)}
+          <Text className="text-muted text-sm">steps today</Text>
+        </ProgressRing>
+
+        <View className="flex-row items-center mt-4">
+          <Ionicons name="flame" size={14} color="#C6F432" />
+          <Text className="text-accent text-xs font-bold ml-1">
+            {pct}% of {fmt(DAILY_GOAL)} goal
           </Text>
-          <Text className="text-muted text-base mb-2 ml-2">steps</Text>
         </View>
-        <View className="h-2.5 bg-line rounded-full mt-4 overflow-hidden">
-          <View
-            className="h-full bg-accent rounded-full"
-            style={{ width: `${pct}%` }}
-          />
-        </View>
-        <Text className="text-muted text-xs mt-2">
-          Daily goal: {fmt(DAILY_GOAL)}
-        </Text>
+
+        {status === "needs-permission" && (
+          <Pressable
+            onPress={connect}
+            className="bg-accent rounded-2xl px-6 py-3 mt-5 active:opacity-80"
+          >
+            <Text className="text-black font-bold">Connect step tracking</Text>
+          </Pressable>
+        )}
+        {status === "unavailable" && (
+          <Text className="text-muted text-xs text-center mt-4">
+            Health Connect is not available on this phone.
+          </Text>
+        )}
+        {status === "error" && (
+          <Text className="text-red-400 text-xs text-center mt-4">
+            Could not read steps. Pull down to retry.
+          </Text>
+        )}
+        {status === "ready" && lastSync && (
+          <Text className="text-muted text-xs mt-3">
+            {syncing
+              ? "Syncing…"
+              : `Synced at ${lastSync.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`}
+          </Text>
+        )}
       </Animated.View>
 
       {/* Competitions header */}

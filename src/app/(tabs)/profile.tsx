@@ -4,6 +4,7 @@ import { Alert, Image, Pressable, ScrollView, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../lib/auth";
+import { useSteps } from "../../lib/steps";
 import { supabase } from "../../lib/supabase";
 
 type Profile = { display_name: string | null; avatar_url: string | null };
@@ -35,6 +36,7 @@ function Row({
 
 export default function Profile() {
   const { session, signOut } = useAuth();
+  const { status, connect } = useSteps();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -132,14 +134,21 @@ export default function Profile() {
         <Row
           icon="footsteps"
           label="Health Connect"
-          right={
-            <View className="bg-line rounded-full px-3 py-1">
-              <Text className="text-muted text-xs font-bold">
-                NOT CONNECTED
-              </Text>
-            </View>
-          }
           last
+          right={
+            status === "ready" ? (
+              <View className="bg-accent/15 rounded-full px-3 py-1">
+                <Text className="text-accent text-xs font-bold">CONNECTED</Text>
+              </View>
+            ) : (
+              <Pressable
+                onPress={connect}
+                className="bg-accent rounded-full px-3 py-1"
+              >
+                <Text className="text-black text-xs font-bold">CONNECT</Text>
+              </Pressable>
+            )
+          }
         />
       </Animated.View>
 
