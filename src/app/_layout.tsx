@@ -3,7 +3,10 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "../../global.css";
 import { AuthProvider, useAuth } from "../lib/auth";
+import { ProfileProvider } from "../lib/profile";
+import { StepsProvider } from "../lib/steps";
 import { colors } from "../theme";
+
 // Not logged in -> login screen, logged in -> dashboard
 function AuthGate() {
   const { session, loading } = useAuth();
@@ -23,28 +26,47 @@ function AuthGate() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <AuthProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
-            headerTintColor: colors.text,
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: colors.bg },
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="create" options={{ title: "New competition" }} />
-          <Stack.Screen name="join" options={{ title: "Join a competition" }} />
-          <Stack.Screen
-            name="competition/[id]"
-            options={{ title: "Competition" }}
-          />
-          <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
-        </Stack>
-        <AuthGate />
-      </AuthProvider>
+      <StepsProvider>
+        <ProfileProvider>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.bg },
+              headerTintColor: colors.text,
+              headerShadowVisible: false,
+              contentStyle: { backgroundColor: colors.bg },
+            }}
+          >
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="create"
+              options={{ title: "New competition" }}
+            />
+            <Stack.Screen
+              name="join"
+              options={{ title: "Join a competition" }}
+            />
+            <Stack.Screen
+              name="competition/[id]"
+              options={{ title: "Competition" }}
+            />
+            <Stack.Screen
+              name="player/[userId]"
+              options={{ title: "Player" }}
+            />
+            <Stack.Screen
+              name="edit-profile"
+              options={{ title: "Edit profile" }}
+            />
+            <Stack.Screen
+              name="auth-callback"
+              options={{ headerShown: false }}
+            />
+          </Stack>
+          <AuthGate />
+        </ProfileProvider>
+      </StepsProvider>
     </AuthProvider>
   );
 }

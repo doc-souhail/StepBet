@@ -35,3 +35,9 @@ export function competitionInfo(start: string, end: string) {
       left === 0 ? "Last day" : left === 1 ? "1 day left" : `${left} days left`,
   };
 }
+// "2026-11-01" for N days ago (local time)
+export function daysAgoISO(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return toISO(d);
+}

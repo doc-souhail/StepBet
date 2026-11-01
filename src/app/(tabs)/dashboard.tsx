@@ -12,12 +12,12 @@ import {
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ProgressRing from "../../components/ProgressRing";
 import { useAuth } from "../../lib/auth";
 import { competitionInfo, todayISO } from "../../lib/dates";
+import { useProfile } from "../../lib/profile";
 import { useSteps } from "../../lib/steps";
 import { supabase } from "../../lib/supabase";
-
-const DAILY_GOAL = 10000;
 
 type Comp = {
   id: string;
@@ -46,6 +46,7 @@ export default function Dashboard() {
   const { session } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { name, avatar, goal } = useProfile();
   const {
     status,
     todaySteps: healthSteps,
@@ -93,13 +94,9 @@ export default function Dashboard() {
     setRefreshing(false);
   }
 
-  const meta = session?.user.user_metadata ?? {};
-  const firstName: string = (meta.full_name ?? meta.name ?? "there").split(
-    " ",
-  )[0];
-  const avatar: string | undefined = meta.avatar_url;
+  const firstName = name.split(" ")[0];
   const shownSteps = status === "ready" ? healthSteps : todaySteps;
-  const pct = Math.min(100, Math.round((shownSteps / DAILY_GOAL) * 100));
+  const pct = Math.min(100, Math.round((shownSteps / goal) * 100));
 
   return (
     <ScrollView
@@ -140,7 +137,7 @@ export default function Dashboard() {
         entering={FadeInDown.duration(500)}
         className="bg-card border border-line rounded-3xl p-6 mb-8 items-center"
       >
-        <ProgressRing progress={shownSteps / DAILY_GOAL} size={200} stroke={16}>
+        <ProgressRing progress={shownSteps / goal} size={200} stroke={16}>
           <Text className="text-ink text-5xl font-extrabold">
             {fmt(shownSteps)}
           </Text>
@@ -150,7 +147,7 @@ export default function Dashboard() {
         <View className="flex-row items-center mt-4">
           <Ionicons name="flame" size={14} color="#C6F432" />
           <Text className="text-accent text-xs font-bold ml-1">
-            {pct}% of {fmt(DAILY_GOAL)} goal
+            {pct}% of {fmt(goal)} goal
           </Text>
         </View>
 

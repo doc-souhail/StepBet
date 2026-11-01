@@ -1,13 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ReactNode, useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { ReactNode } from "react";
 import { Alert, Image, Pressable, ScrollView, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import MyStats from "../../components/MyStats";
 import { useAuth } from "../../lib/auth";
+import { useProfile } from "../../lib/profile";
 import { useSteps } from "../../lib/steps";
-import { supabase } from "../../lib/supabase";
-
-type Profile = { display_name: string | null; avatar_url: string | null };
 
 // One line inside a card: icon + label on the left, value on the right
 function Row({
@@ -36,25 +36,11 @@ function Row({
 
 export default function Profile() {
   const { session, signOut } = useAuth();
+  const { name, avatar, goal } = useProfile();
   const { status, connect } = useSteps();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [profile, setProfile] = useState<Profile | null>(null);
 
-  useEffect(() => {
-    if (!session) return;
-    // Row created automatically by the database trigger at signup
-    supabase
-      .from("profiles")
-      .select("display_name, avatar_url")
-      .eq("id", session.user.id)
-      .single()
-      .then(({ data }) => setProfile(data));
-  }, [session]);
-
-  const meta = session?.user.user_metadata ?? {};
-  const name: string =
-    profile?.display_name ?? meta.full_name ?? meta.name ?? "Player";
-  const avatar: string | undefined = profile?.avatar_url ?? meta.avatar_url;
   const memberSince = session?.user.created_at
     ? new Date(session.user.created_at).toLocaleDateString("en-GB", {
         month: "long",
@@ -100,37 +86,34 @@ export default function Profile() {
         </View>
         <Text className="text-ink text-3xl font-extrabold mt-4">{name}</Text>
         <Text className="text-muted text-sm mt-1">{session?.user.email}</Text>
-      </Animated.View>
 
-      {/* Account */}
+        <Pressable
+          onPress={() => router.push("/edit-profile")}
+          className="border border-line rounded-full px-5 py-2 flex-row items-center mt-4 active:opacity-70"
+        >
+          <Ionicons name="create-outline" size={16} color="#F4F4F5" />
+          <Text className="text-ink font-semibold ml-2">Edit profile</Text>
+        </Pressable>
+      </Animated.View>
+      <MyStats />
+
+      {/* Goal + step tracking */}
       <Text className="text-muted text-xs font-semibold tracking-widest mb-2 ml-1">
-        ACCOUNT
+        STEPS
       </Text>
       <Animated.View
         entering={FadeInDown.delay(100).duration(500)}
         className="bg-card border border-line rounded-3xl mb-6 overflow-hidden"
       >
         <Row
-          icon="logo-google"
-          label="Signed in with"
-          right={<Text className="text-muted">Google</Text>}
+          icon="flag-outline"
+          label="Daily goal"
+          right={
+            <Text className="text-ink font-bold">
+              {goal.toLocaleString("en-US")}
+            </Text>
+          }
         />
-        <Row
-          icon="calendar-outline"
-          label="Member since"
-          right={<Text className="text-muted">{memberSince}</Text>}
-          last
-        />
-      </Animated.View>
-
-      {/* Step tracking */}
-      <Text className="text-muted text-xs font-semibold tracking-widest mb-2 ml-1">
-        STEP TRACKING
-      </Text>
-      <Animated.View
-        entering={FadeInDown.delay(200).duration(500)}
-        className="bg-card border border-line rounded-3xl mb-8 overflow-hidden"
-      >
         <Row
           icon="footsteps"
           label="Health Connect"
@@ -149,6 +132,27 @@ export default function Profile() {
               </Pressable>
             )
           }
+        />
+      </Animated.View>
+
+      {/* Account */}
+      <Text className="text-muted text-xs font-semibold tracking-widest mb-2 ml-1">
+        ACCOUNT
+      </Text>
+      <Animated.View
+        entering={FadeInDown.delay(200).duration(500)}
+        className="bg-card border border-line rounded-3xl mb-8 overflow-hidden"
+      >
+        <Row
+          icon="logo-google"
+          label="Signed in with"
+          right={<Text className="text-muted">Google</Text>}
+        />
+        <Row
+          icon="calendar-outline"
+          label="Member since"
+          right={<Text className="text-muted">{memberSince}</Text>}
+          last
         />
       </Animated.View>
 

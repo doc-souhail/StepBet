@@ -12,7 +12,11 @@
     },
     "android": {
       "package": "com.yourname.stepbet",
-      "permissions": ["android.permission.health.READ_STEPS"],
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

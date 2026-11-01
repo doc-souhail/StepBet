@@ -1,5 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
+import {
+  Stack,
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+} from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -111,6 +116,7 @@ function PodiumSpot({ player, rank }: { player: Player; rank: 1 | 2 | 3 }) {
 export default function CompetitionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
+  const router = useRouter();
 
   const [comp, setComp] = useState<Competition | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -247,8 +253,12 @@ export default function CompetitionScreen() {
             key={p.user_id}
             entering={FadeInDown.delay(200 + i * 60).duration(400)}
           >
-            <View
-              className={`flex-row items-center rounded-2xl px-4 py-3 mb-2 border ${
+            <Pressable
+              disabled={upcoming}
+              onPress={() =>
+                router.push(`/player/${p.user_id}?comp=${comp.id}` as any)
+              }
+              className={`flex-row items-center rounded-2xl px-4 py-3 mb-2 border active:opacity-80 ${
                 me ? "bg-accent/10 border-accent/40" : "bg-card border-line"
               }`}
             >
@@ -272,11 +282,14 @@ export default function CompetitionScreen() {
                 )}
               </View>
               {!upcoming && (
-                <Text className="text-ink text-lg font-extrabold">
+                <Text className="text-ink text-lg font-extrabold mr-1">
                   {fmt(p.total_steps)}
                 </Text>
               )}
-            </View>
+              {!upcoming && (
+                <Ionicons name="chevron-forward" size={16} color="#8B8D94" />
+              )}
+            </Pressable>
           </Animated.View>
         );
       })}
