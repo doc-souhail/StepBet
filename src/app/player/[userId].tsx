@@ -26,6 +26,7 @@ export default function PlayerScreen() {
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [days, setDays] = useState<DayRow[]>([]);
+  const [extra, setExtra] = useState({ distanceM: 0, kcal: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,15 +52,30 @@ export default function PlayerScreen() {
       const { start_date, end_date } = compRes.data;
       const stepsRes = await supabase
         .from("daily_steps")
-        .select("day, steps")
+        .select("day, steps, distance_m, active_kcal")
         .eq("user_id", userId)
         .gte("day", start_date)
         .lte("day", end_date);
 
+      const raw = (stepsRes.data ?? []) as {
+        day: string;
+        steps: number;
+        distance_m: number;
+        active_kcal: number;
+      }[];
+
       setProfile(profRes.data as PlayerProfile);
       setDays(
-        buildDays((stepsRes.data as DayRow[]) ?? [], start_date, end_date),
+        buildDays(
+          raw.map((r) => ({ day: r.day, steps: r.steps })),
+          start_date,
+          end_date,
+        ),
       );
+      setExtra({
+        distanceM: raw.reduce((s, r) => s + (r.distance_m ?? 0), 0),
+        kcal: raw.reduce((s, r) => s + (r.active_kcal ?? 0), 0),
+      });
       setLoading(false);
     })();
   }, [userId, comp]);
@@ -86,6 +102,15 @@ export default function PlayerScreen() {
   const stats = computeStats(days, goal, today);
   const name = profile.display_name ?? "Player";
   const me = userId === session?.user.id;
+  const hasExtra = extra.distanceM > 0 || extra.kcal > 0;
+  const bestLabel =
+    stats.best && stats.best.steps > 0
+      ? parseISO(stats.best.day).toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        })
+      : undefined;
 
   return (
     <ScrollView
@@ -120,7 +145,7 @@ export default function PlayerScreen() {
         </Text>
       </Animated.View>
 
-      {/* Total */}
+      {/* Total + chart */}
       <Animated.View
         entering={FadeInDown.delay(100).duration(500)}
         className="bg-card border border-line rounded-3xl p-5 mb-3"
@@ -152,17 +177,10 @@ export default function PlayerScreen() {
           <StatTile
             label="BEST DAY"
             value={stats.best ? fmt(stats.best.steps) : "–"}
-            sub={
-              stats.best && stats.best.steps > 0
-                ? parseISO(stats.best.day).toLocaleDateString("en-GB", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })
-                : undefined
-            }
+            sub={bestLabel}
           />
         </View>
+
         <View className="flex-row gap-3">
           <StatTile
             label="GOAL DAYS"
@@ -176,6 +194,21 @@ export default function PlayerScreen() {
             highlight={stats.streak > 0}
           />
         </View>
+
+        {hasExtra ? (
+          <View className="flex-row gap-3 mt-3">
+            <StatTile
+              label="DISTANCE"
+              value={`${(extra.distanceM / 1000).toFixed(1)} km`}
+              sub="in this competition"
+            />
+            <StatTile
+              label="ACTIVE ENERGY"
+              value={fmt(extra.kcal)}
+              sub="kcal in this competition"
+            />
+          </View>
+        ) : null}
       </Animated.View>
 
       <Text className="text-muted text-xs text-center mt-6">

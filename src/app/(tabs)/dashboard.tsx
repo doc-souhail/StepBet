@@ -50,6 +50,9 @@ export default function Dashboard() {
   const {
     status,
     todaySteps: healthSteps,
+    todayDistanceM: healthDistanceM,
+    todayKcal: healthKcal,
+    extras,
     lastSync,
     syncing,
     connect,
@@ -150,6 +153,33 @@ export default function Dashboard() {
             {pct}% of {fmt(goal)} goal
           </Text>
         </View>
+        {(extras.distance || extras.calories) && (
+          <View className="flex-row w-full mt-5 pt-5 border-t border-line">
+            {extras.distance && (
+              <View className="flex-1 items-center">
+                <Text className="text-ink text-xl font-extrabold">
+                  {(healthDistanceM / 1000).toFixed(1)} km
+                </Text>
+                <Text className="text-muted text-xs mt-0.5">DISTANCE</Text>
+              </View>
+            )}
+            {extras.calories && (
+              <View className="flex-1 items-center">
+                <Text className="text-ink text-xl font-extrabold">
+                  {fmt(healthKcal)} kcal
+                </Text>
+                <Text className="text-muted text-xs mt-0.5">ACTIVE ENERGY</Text>
+              </View>
+            )}
+          </View>
+        )}
+        {status === "ready" && !(extras.distance && extras.calories) && (
+          <Pressable onPress={connect} className="mt-4">
+            <Text className="text-accent text-xs font-bold">
+              + Add distance & calories
+            </Text>
+          </Pressable>
+        )}
 
         {status === "needs-permission" && (
           <Pressable
